@@ -66,31 +66,34 @@ namespace BirdTouchWebAPI.Controllers
                     true);
 
                 // If successful...
-                if (result.Succeeded)
+                if (!result.Succeeded)
                 {
-                    var claims = new[]
-                    {
+                    return Forbid();
+                }
+
+                var claims = new[]
+                   {
                         new Claim(ClaimTypes.Name, user.UserName),
                         new Claim("userId", user.Id.ToString())
                     };
 
-                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWTSecurityKey"]));
-                    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var key = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(_configuration["JWTSecurityKey"]));
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-                    var token = new JwtSecurityToken(
-                        issuer: _configuration["JWTValidIssuer"],
-                        audience: _configuration["JWTValidAudience"],
-                        claims: claims,
-                        expires: DateTime.Now.AddMonths(6),
-                        signingCredentials: creds);
+                var token = new JwtSecurityToken(
+                    issuer: _configuration["JWTValidIssuer"],
+                    audience: _configuration["JWTValidAudience"],
+                    claims: claims,
+                    expires: DateTime.Now.AddDays(30),
+                    signingCredentials: creds);
 
-                    return Ok(new
-                    {
-                        token = new JwtSecurityTokenHandler().WriteToken(token)
-                    });
-                }
-
-                return Forbid();
+                return Ok(new
+                {
+                    Id = user.Id,
+                    Username = user.UserName,
+                    JwtToken = new JwtSecurityTokenHandler().WriteToken(token)
+                });
             }
             catch (Exception e)
             {

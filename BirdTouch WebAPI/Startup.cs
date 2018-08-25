@@ -77,9 +77,8 @@ namespace BirdTouchWebAPI
             else
             {
                 app.UseHsts();
+                app.UseHttpsRedirection();
             }
-
-            app.UseHttpsRedirection();
 
             app.UseMvc();
         }

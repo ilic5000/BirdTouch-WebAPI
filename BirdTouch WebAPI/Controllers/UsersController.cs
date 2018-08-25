@@ -3,6 +3,7 @@ using BirdTouchWebAPI.Data.Identity;
 using BirdTouchWebAPI.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace BirdTouchWebAPI.Controllers
@@ -43,23 +44,76 @@ namespace BirdTouchWebAPI.Controllers
         #endregion
 
         // POST api/users
-        // Creates an user based on login credentials
+        // Creates user based on login credentials
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] LoginCredentials loginCredentials)
         {
-            var result = await _userManager.CreateAsync(new ApplicationUser
+            try
             {
-                UserName = loginCredentials.Username,
-                Email = loginCredentials.Username
-            }, loginCredentials.Password);
+                var result = await _userManager.CreateAsync(new ApplicationUser
+                {
+                    UserName = loginCredentials.Username,
+                    Email = loginCredentials.Username
+                }, loginCredentials.Password);
 
-            if (result.Succeeded)
-            {
+                if (!result.Succeeded)
+                {
+                    return BadRequest();
+
+                }
+
+                var justCreatedUser = await _userManager.FindByNameAsync(loginCredentials.Username);
+
+                _applicationContext.UserInfo.Add(new UserInfo()
+                {
+                    Id = Guid.NewGuid(),
+                    FkUserId = justCreatedUser.Id
+                });
+
+                _applicationContext.BusinessInfo.Add(new BusinessInfo()
+                {
+                    Id = Guid.NewGuid(),
+                    FkUserId = justCreatedUser.Id
+                });
+
+                await _applicationContext.SaveChangesAsync();
+
                 //TODO: Maybe return JWT token
-                return Ok();
+                return Ok(new
+                {
+                    Id = justCreatedUser.Id,
+                    Username = justCreatedUser.UserName
+                });
             }
+            catch (System.Exception)
+            {
+                return BadRequest();
+            }
+        }
 
-            return BadRequest();
+        [HttpGet]
+        [Route("doesusernameexist")]
+        public async Task<IActionResult> DoesUsernameExist(string username)
+        {
+            try
+            {
+                bool userExists = false;
+                var user = await _userManager.FindByNameAsync(username);
+
+                if (user != null)
+                {
+                    userExists = true;
+                }
+
+                return Ok(new
+                {
+                    UserExists = userExists
+                });
+            }
+            catch (System.Exception)
+            {
+                return BadRequest();
+            }
         }
     }
 }
