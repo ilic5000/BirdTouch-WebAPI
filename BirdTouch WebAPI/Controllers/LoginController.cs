@@ -1,0 +1,101 @@
+﻿using BirdTouchWebAPI.Data.Application;
+using BirdTouchWebAPI.Data.Identity;
+using BirdTouchWebAPI.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BirdTouchWebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class LoginController : ControllerBase
+    {
+        #region Protected Members
+        protected ApplicationDbContext _context;
+        protected UserManager<ApplicationUser> _userManager;
+        protected SignInManager<ApplicationUser> _signInManager;
+        protected IConfiguration _configuration;
+        #endregion
+
+        #region Constructor
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        /// <param name="context">The injected context</param>
+        public LoginController(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            IConfiguration configuration)
+        {
+            _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _configuration = configuration;
+        }
+        #endregion
+
+        /// <summary>
+        /// Creates JWT token when credentials are valid
+        /// </summary>
+        /// <param name="loginCredentials">Credentials used for login</param>
+        /// <returns></returns>
+        [HttpPost]
+        public async Task<IActionResult> Post(LoginCredentials loginCredentials)
+        {
+            try
+            {
+                var user = await _userManager.FindByNameAsync(loginCredentials.Username);
+
+                if (user == null)
+                {
+                    return Forbid();
+                }
+
+                // Sign user in with the valid credentials
+                var result = await _signInManager.CheckPasswordSignInAsync(
+                    user,
+                    loginCredentials.Password,
+                    true);
+
+                // If successful...
+                if (result.Succeeded)
+                {
+                    var claims = new[]
+                    {
+                        new Claim(ClaimTypes.Name, user.UserName),
+                        new Claim("userId", user.Id.ToString())
+                    };
+
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWTSecurityKey"]));
+                    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                    var token = new JwtSecurityToken(
+                        issuer: _configuration["JWTValidIssuer"],
+                        audience: _configuration["JWTValidAudience"],
+                        claims: claims,
+                        expires: DateTime.Now.AddMonths(6),
+                        signingCredentials: creds);
+
+                    return Ok(new
+                    {
+                        token = new JwtSecurityTokenHandler().WriteToken(token)
+                    });
+                }
+
+                return Forbid();
+            }
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
+        }
+    }
+}

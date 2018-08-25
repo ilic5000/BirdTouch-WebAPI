@@ -1,0 +1,1 @@
+Scaffold-DbContext "Server=127.0.0.1; Port=5432; Database=birdtouch8; User Id=birdtouch_user; Password=birtouch22!2$#@!mit;" Npgsql.EntityFrameworkCore.PostgreSQL -OutputDir DatabaseModels
