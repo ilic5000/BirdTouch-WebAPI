@@ -1,10 +1,18 @@
 ﻿using BirdTouchWebAPI.Data.Application;
 using BirdTouchWebAPI.Data.Identity;
 using BirdTouchWebAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using System.Linq;
+using BirdTouchWebAPI.Constants;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Claims;
+using BirdTouchWebAPI.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace BirdTouchWebAPI.Controllers
 {
@@ -25,6 +33,7 @@ namespace BirdTouchWebAPI.Controllers
         /// The manager for handling signing in and out for our users
         /// </summary>
         protected SignInManager<ApplicationUser> _signInManager;
+        protected IConfiguration _configuration;
         #endregion
 
         #region Constructor
@@ -35,17 +44,20 @@ namespace BirdTouchWebAPI.Controllers
         public UsersController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            SignInManager<ApplicationUser> signInManager,
+            IConfiguration configuration)
         {
             _applicationContext = context;
             _userManager = userManager;
             _signInManager = signInManager;
+            _configuration = configuration;
         }
         #endregion
 
         // POST api/users
         // Creates user based on login credentials
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Post([FromBody] LoginCredentials loginCredentials)
         {
             try
@@ -78,14 +90,130 @@ namespace BirdTouchWebAPI.Controllers
 
                 await _applicationContext.SaveChangesAsync();
 
-                //TODO: Maybe return JWT token
+                var claims = new[]
+                {
+                        new Claim(ClaimTypes.Name, justCreatedUser.UserName),
+                        new Claim(ClaimsConstants.USERID, justCreatedUser.Id.ToString())
+                };
+
                 return Ok(new
                 {
-                    Id = justCreatedUser.Id,
-                    Username = justCreatedUser.UserName
+                    User = new
+                    {
+                        Id = justCreatedUser.Id,
+                        Username = justCreatedUser.UserName
+                    },
+                    JwtToken = JWTGenerator.GenerateJWTToken(_configuration, claims)
                 });
             }
-            catch (System.Exception)
+            catch (Exception)
+            {
+                var justCreatedUser = await _userManager.FindByNameAsync(loginCredentials.Username);
+                if (justCreatedUser != null)
+                {
+                    var userInfo = _applicationContext
+                                .UserInfo
+                                .FirstOrDefault(u => u.Id == justCreatedUser.Id);
+
+                    if (userInfo != null)
+                    {
+                        _applicationContext
+                            .UserInfo
+                            .Remove(userInfo);
+                    }
+
+                    var businessInfo = _applicationContext
+                                .BusinessInfo
+                                .FirstOrDefault(u => u.Id == justCreatedUser.Id);
+
+                    if (businessInfo != null)
+                    {
+                        _applicationContext
+                            .BusinessInfo
+                            .Remove(businessInfo);
+                    }
+
+                    _applicationContext.SaveChanges();
+                    await _userManager.DeleteAsync(justCreatedUser);
+                }
+
+                return BadRequest();
+            }
+        }
+
+        [HttpGet]
+        [Route("getPrivateInfo")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetPrivateInfo()
+        {
+            try
+            {
+                var userId = User
+                    .Claims
+                    .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException();
+                }
+
+                var extendedUserInfo = await _applicationContext
+                    .UserInfo
+                    .AsNoTracking()
+                    .Include(u => u.FkUser)
+                    .Where(u => u.FkUserId == Guid.Parse(userId))
+                    .Select(u => new
+                    {
+                        u.FkUser.UserName,
+                        u.Adress,
+                        u.Dateofbirth,
+                        u.Description,
+                        u.Email,
+                        u.Fblink,
+                        u.Firstname,
+                        u.FkUserId,
+                        u.Gpluslink,
+                        u.Id,
+                        u.Lastname,
+                        u.Linkedinlink,
+                        u.Phonenumber,
+                        u.Profilepicturedata,
+                        u.Twlink
+                    }).FirstOrDefaultAsync();
+
+                return Ok(extendedUserInfo);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpGet]
+        [Route("getBusinessInfo")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetBusinessInfo()
+        {
+            try
+            {
+                var userId = User
+                    .Claims
+                    .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException();
+                }
+
+                BusinessInfo businessInfo = await _applicationContext
+                    .BusinessInfo
+                    .AsNoTracking()
+                    .Where(u => u.FkUserId == Guid.Parse(userId))
+                    .FirstOrDefaultAsync();
+
+                return Ok(businessInfo);
+            }
+            catch (Exception)
             {
                 return BadRequest();
             }
@@ -93,6 +221,7 @@ namespace BirdTouchWebAPI.Controllers
 
         [HttpGet]
         [Route("doesusernameexist")]
+        [AllowAnonymous]
         public async Task<IActionResult> DoesUsernameExist(string username)
         {
             try
