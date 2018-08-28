@@ -154,7 +154,7 @@ namespace BirdTouchWebAPI.Controllers
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    throw new NullReferenceException();
+                    throw new NullReferenceException("UserId is missing");
                 }
 
                 var extendedUserInfo = await _applicationContext
@@ -189,6 +189,58 @@ namespace BirdTouchWebAPI.Controllers
             }
         }
 
+        [HttpPatch]
+        [Route("patchPrivateInfo")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> PatchPrivateInfo([FromBody] UserInfo patchedUserInfo)
+        {
+            try
+            {
+                var userId = User
+                        .Claims
+                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException("UserId is missing");
+                }
+
+                var userInfo = await _applicationContext
+                                        .UserInfo
+                                        .FirstOrDefaultAsync(u => u.FkUserId == Guid.Parse(userId));
+                if (userInfo == null)
+                {
+                    throw new NullReferenceException("UserInfo is missing");
+                }
+
+                userInfo.Firstname = patchedUserInfo.Firstname;
+                userInfo.Lastname = patchedUserInfo.Lastname;
+                userInfo.Adress = patchedUserInfo.Adress;
+                userInfo.Dateofbirth = patchedUserInfo.Dateofbirth;
+                userInfo.Email = patchedUserInfo.Email;
+                userInfo.Phonenumber = patchedUserInfo.Phonenumber;
+                userInfo.Description = patchedUserInfo.Description;
+                userInfo.Fblink = patchedUserInfo.Fblink;
+                userInfo.Gpluslink = patchedUserInfo.Gpluslink;
+                userInfo.Linkedinlink = patchedUserInfo.Linkedinlink;
+                userInfo.Twlink = patchedUserInfo.Twlink;
+
+                if (patchedUserInfo.Profilepicturedata != null)
+                {
+                    userInfo.Profilepicturedata = patchedUserInfo.Profilepicturedata;
+                }
+
+                _applicationContext.Update(userInfo);
+                await _applicationContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.InnerException);
+            }
+        }
+
         [HttpGet]
         [Route("getBusinessInfo")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -216,6 +268,53 @@ namespace BirdTouchWebAPI.Controllers
             catch (Exception)
             {
                 return BadRequest();
+            }
+        }
+
+        [HttpPatch]
+        [Route("patchBusinessInfo")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> PatchBusinessInfo([FromBody] BusinessInfo patchedUserInfo)
+        {
+            try
+            {
+                var userId = User
+                        .Claims
+                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException("UserId is missing");
+                }
+
+                var businessInfo = await _applicationContext
+                                        .BusinessInfo
+                                        .FirstOrDefaultAsync(u => u.FkUserId == Guid.Parse(userId));
+                if (businessInfo == null)
+                {
+                    throw new NullReferenceException("UserInfo is missing");
+                }
+
+                businessInfo.Companyname = patchedUserInfo.Companyname;
+                businessInfo.Adress = patchedUserInfo.Adress;
+                businessInfo.Description = patchedUserInfo.Description;
+                businessInfo.Email = patchedUserInfo.Email;
+                businessInfo.Phonenumber = patchedUserInfo.Phonenumber;
+                businessInfo.Website = patchedUserInfo.Website;
+
+                if (patchedUserInfo.Profilepicturedata != null)
+                {
+                    businessInfo.Profilepicturedata = patchedUserInfo.Profilepicturedata;
+                }
+
+                _applicationContext.Update(businessInfo);
+                await _applicationContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.InnerException);
             }
         }
 
