@@ -13,6 +13,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
 using BirdTouchWebAPI.Services;
 using Microsoft.Extensions.Configuration;
+using BirdTouchWebAPI.Extensions;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace BirdTouchWebAPI.Controllers
 {
@@ -318,6 +321,230 @@ namespace BirdTouchWebAPI.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("makeUserVisible")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> MakeUserVisible([FromBody] ActiveUsers updatedActiveUser)
+        {
+            try
+            {
+                var userId = User
+                        .Claims
+                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException("UserId is missing");
+                }
+
+                var activeUser = await _applicationContext
+                                        .ActiveUsers
+                                        .FirstOrDefaultAsync(u =>
+                                            u.FkUserId == Guid.Parse(userId)
+                                            && u.ActiveMode == updatedActiveUser.ActiveMode);
+
+                if (activeUser != null)
+                {
+                    activeUser.DatetimeLastUpdate = DateTime.UtcNow;
+                    activeUser.LocationLatitude = updatedActiveUser.LocationLatitude;
+                    activeUser.LocationLongitude = updatedActiveUser.LocationLongitude;
+                    await _applicationContext.SaveChangesAsync();
+                    return Ok();
+                }
+
+                var newActiveUser = new ActiveUsers()
+                {
+                    Id = Guid.NewGuid(),
+                    ActiveMode = updatedActiveUser.ActiveMode,
+                    DatetimeLastUpdate = DateTime.UtcNow,
+                    FkUserId = Guid.Parse(userId),
+                    LocationLatitude = updatedActiveUser.LocationLatitude,
+                    LocationLongitude = updatedActiveUser.LocationLongitude,
+                };
+
+                _applicationContext.Add(newActiveUser);
+                await _applicationContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.InnerException);
+            }
+        }
+
+        [HttpDelete]
+        [Route("makeUserInvisible")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> MakeUserInvisible([FromBody] ActiveUsers updatedActiveUser)
+        {
+            try
+            {
+                var userId = User
+                        .Claims
+                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException("UserId is missing");
+                }
+
+                var activeUser = await _applicationContext
+                                        .ActiveUsers
+                                        .FirstOrDefaultAsync(u =>
+                                            u.FkUserId == Guid.Parse(userId)
+                                            && u.ActiveMode == updatedActiveUser.ActiveMode);
+
+                if (activeUser != null)
+                {
+                    _applicationContext.Remove(activeUser);
+                    await _applicationContext.SaveChangesAsync();
+                }
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.InnerException);
+            }
+        }
+
+        /// <summary>
+        /// Gets users that are near logged in user
+        /// </summary>
+        /// <param name="activeMode">Get private or business users</param>
+        /// <param name="radiusOfSearch">Search radius in kilometers</param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("getUsersNearMe")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetUsersNearMe(int? activeMode, double? radiusOfSearch)
+        {
+            try
+            {
+                var userId = User
+                        .Claims
+                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException("UserId is missing");
+                }
+
+                if (radiusOfSearch == null
+                    || radiusOfSearch == 0)
+                {
+                    return BadRequest();
+                }
+
+                var activeUser = await _applicationContext
+                                        .ActiveUsers
+                                        .AsNoTracking()
+                                        .FirstOrDefaultAsync(u =>
+                                            u.FkUserId == Guid.Parse(userId)
+                                            && u.ActiveMode == activeMode);
+
+                if (activeUser == null
+                    || activeUser.LocationLatitude == null
+                    || activeUser.LocationLongitude == null)
+                {
+                    return BadRequest();
+                }
+
+                var activeUserCoordinates = new Coordinate()
+                {
+                    Latitude = (double)activeUser.LocationLatitude,
+                    Longitude = (double)activeUser.LocationLongitude
+                };
+
+                var listOfUsersIdNearMe = await _applicationContext
+                                            .ActiveUsers
+                                            .AsNoTracking()
+                                            .Where(u => u.ActiveMode == activeMode
+                                                     && u.FkUserId != activeUser.FkUserId
+                                                     && activeUserCoordinates
+                                                          .DistanceTo(
+                                                            (double)u.LocationLatitude,
+                                                            (double)u.LocationLongitude)
+                                                        < radiusOfSearch)
+                                            .Select(u => u.FkUserId)
+                                            .ToListAsync();
+
+                if (listOfUsersIdNearMe.Count == 0)
+                {
+                    if (activeMode.ToString() == ActiveModesConstants.PRIVATE)
+                    {
+                        return Ok(JsonConvert.SerializeObject(new List<UserInfo>()));
+                    }
+
+                    if (activeMode.ToString() == ActiveModesConstants.BUSINESS)
+                    {
+                        return Ok(JsonConvert.SerializeObject(new List<BusinessInfo>()));
+                    }
+                }
+
+                if (activeMode.ToString() == ActiveModesConstants.PRIVATE)
+                {
+                    var listOfUsersPrivateInfo = await _applicationContext
+                        .UserInfo
+                        .AsNoTracking()
+                        .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId))
+                        .Select(
+                        u => new
+                        {
+                            u.FkUserId,
+                            u.Adress,
+                            u.Dateofbirth,
+                            u.Description,
+                            u.Email,
+                            u.Fblink,
+                            u.Firstname,
+                            u.Lastname,
+                            u.Gpluslink,
+                            u.Id,
+                            u.Linkedinlink,
+                            u.Phonenumber,
+                            u.Profilepicturedata,
+                            u.Twlink
+                        })
+                        .ToListAsync();
+
+                    return (Ok(JsonConvert.SerializeObject(listOfUsersPrivateInfo)));
+                }
+
+                if (activeMode.ToString() == ActiveModesConstants.BUSINESS)
+                {
+                    var listOfUsersBusinessInfo = await _applicationContext
+                        .BusinessInfo
+                        .AsNoTracking()
+                        .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId))
+                        .Select(
+                        u => new
+                        {
+                            u.Adress,
+                            u.Companyname,
+                            u.Description,
+                            u.Email,
+                            u.FkUserId,
+                            u.Id,
+                            u.Phonenumber,
+                            u.Profilepicturedata,
+                            u.Website
+                        })
+                        .ToListAsync();
+
+                    return (Ok(JsonConvert.SerializeObject(listOfUsersBusinessInfo)));
+                }
+
+                return BadRequest();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.InnerException);
+            }
+        }
+
+
         [HttpGet]
         [Route("doesusernameexist")]
         [AllowAnonymous]
@@ -338,7 +565,7 @@ namespace BirdTouchWebAPI.Controllers
                     UserExists = userExists
                 });
             }
-            catch (System.Exception)
+            catch (Exception)
             {
                 return BadRequest();
             }
