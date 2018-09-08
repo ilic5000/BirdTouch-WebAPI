@@ -373,6 +373,64 @@ namespace BirdTouchWebAPI.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("savePrivateSavedList")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> SavePrivateSavedList([FromBody] List<Guid> listOfPrivateUsersToBeSaved)
+        {
+            try
+            {
+                var userId = User
+                        .Claims
+                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException("UserId is missing");
+                }
+
+                var alreadySavedUsers = await _applicationContext
+                                        .SavedPrivate
+                                        .Where(u =>
+                                                 u.FkUserId == Guid.Parse(userId))
+                                        .Select(t => t.FkSavedContactId)
+                                        .ToListAsync();
+
+                var usersToBeDeleted =
+                    alreadySavedUsers.Except(listOfPrivateUsersToBeSaved).ToList();
+
+                listOfPrivateUsersToBeSaved = listOfPrivateUsersToBeSaved
+                                                .Except(alreadySavedUsers).ToList();
+
+                foreach (var userIdToBeSaved in listOfPrivateUsersToBeSaved)
+                {
+                    await _applicationContext.SavedPrivate.AddAsync(
+                        new SavedPrivate()
+                        {
+                            Id = Guid.NewGuid(),
+                            FkUserId = Guid.Parse(userId),
+                            FkSavedContactId = userIdToBeSaved
+                        });
+                }
+
+                var listForDeletion = await _applicationContext
+                    .SavedPrivate
+                    .Where(u => u.FkUserId == Guid.Parse(userId)
+                            && usersToBeDeleted.Contains(u.FkSavedContactId))
+                    .ToListAsync();
+
+                _applicationContext.RemoveRange(listForDeletion);
+
+                await _applicationContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.InnerException);
+            }
+        }
+
         [HttpDelete]
         [Route("makeUserInvisible")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
