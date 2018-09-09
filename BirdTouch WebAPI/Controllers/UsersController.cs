@@ -419,7 +419,65 @@ namespace BirdTouchWebAPI.Controllers
                             && usersToBeDeleted.Contains(u.FkSavedContactId))
                     .ToListAsync();
 
-                _applicationContext.RemoveRange(listForDeletion);
+                _applicationContext.SavedPrivate.RemoveRange(listForDeletion);
+
+                await _applicationContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.InnerException);
+            }
+        }
+
+        [HttpPost]
+        [Route("saveBusinessSavedList")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> SaveBusinessSavedList([FromBody] List<Guid> listOfBusinessUsersToBeSaved)
+        {
+            try
+            {
+                var userId = User
+                        .Claims
+                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new NullReferenceException("UserId is missing");
+                }
+
+                var alreadySavedUsers = await _applicationContext
+                                        .SavedBusiness
+                                        .Where(u =>
+                                                 u.FkUserId == Guid.Parse(userId))
+                                        .Select(t => t.FkSavedContactId)
+                                        .ToListAsync();
+
+                var usersToBeDeleted =
+                    alreadySavedUsers.Except(listOfBusinessUsersToBeSaved).ToList();
+
+                listOfBusinessUsersToBeSaved = listOfBusinessUsersToBeSaved
+                                                .Except(alreadySavedUsers).ToList();
+
+                foreach (var userIdToBeSaved in listOfBusinessUsersToBeSaved)
+                {
+                    await _applicationContext.SavedBusiness.AddAsync(
+                        new SavedBusiness()
+                        {
+                            Id = Guid.NewGuid(),
+                            FkUserId = Guid.Parse(userId),
+                            FkSavedContactId = userIdToBeSaved
+                        });
+                }
+
+                var listForDeletion = await _applicationContext
+                    .SavedBusiness
+                    .Where(u => u.FkUserId == Guid.Parse(userId)
+                            && usersToBeDeleted.Contains(u.FkSavedContactId))
+                    .ToListAsync();
+
+                _applicationContext.SavedBusiness.RemoveRange(listForDeletion);
 
                 await _applicationContext.SaveChangesAsync();
 

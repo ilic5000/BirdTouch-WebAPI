@@ -5,10 +5,12 @@ using BirdTouchWebAPI.Models;
 using BirdTouchWebAPI.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -79,12 +81,19 @@ namespace BirdTouchWebAPI.Controllers
                         new Claim(ClaimsConstants.USERID, user.Id.ToString())
                     };
 
+                var userInfo = await _context
+                    .UserInfo
+                    .AsNoTracking()
+                    .Where(u => u.FkUserId == user.Id).FirstOrDefaultAsync();
+
                 return Ok(new
                 {
                     User = new
                     {
                         Id = user.Id,
                         Username = user.UserName,
+                        Firstname = userInfo?.Firstname,
+                        Lastname = userInfo?.Lastname
                     },
                     JwtToken = JWTGenerator.GenerateJWTToken(_configuration, claims)
                 });
