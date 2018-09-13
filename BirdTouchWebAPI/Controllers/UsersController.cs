@@ -68,8 +68,8 @@ namespace BirdTouchWebAPI.Controllers
 
                 if (!result.Succeeded)
                 {
+                    // TODO: Add types of incorrect password format and handle it in client
                     return BadRequest();
-
                 }
 
                 var justCreatedUser = await _userManager.FindByNameAsync(loginCredentials.Username);

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BirdTouch WebAPI", "BirdTouch WebAPI\BirdTouch WebAPI.csproj", "{121B5A6F-3129-4EA9-A63E-AC15EBCBDB02}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BirdTouchWebAPI", "BirdTouchWebAPI\BirdTouchWebAPI.csproj", "{195163AF-6118-4E71-B29A-F3CC671FC287}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{121B5A6F-3129-4EA9-A63E-AC15EBCBDB02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{121B5A6F-3129-4EA9-A63E-AC15EBCBDB02}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{121B5A6F-3129-4EA9-A63E-AC15EBCBDB02}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{121B5A6F-3129-4EA9-A63E-AC15EBCBDB02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{195163AF-6118-4E71-B29A-F3CC671FC287}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{195163AF-6118-4E71-B29A-F3CC671FC287}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{195163AF-6118-4E71-B29A-F3CC671FC287}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{195163AF-6118-4E71-B29A-F3CC671FC287}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
