@@ -90,7 +90,8 @@ namespace BirdTouchWebAPI.Controllers
                         Id = user.Id,
                         Username = user.UserName,
                         Firstname = userInfo?.Firstname,
-                        Lastname = userInfo?.Lastname
+                        Lastname = userInfo?.Lastname,
+                        ProfilePictureData = userInfo?.Profilepicturedata
                     },
                     JwtToken = JWTGenerator.GenerateJWTToken(_configuration, claims)
                 });

@@ -77,6 +77,9 @@ namespace BirdTouchWebAPI.Controllers
                 _applicationContext.UserInfo.Add(new UserInfo()
                 {
                     Id = Guid.NewGuid(),
+                    Firstname = loginCredentials.Firstname,
+                    Lastname = loginCredentials.Lastname,
+                    Description = loginCredentials.Description,
                     FkUserId = justCreatedUser.Id
                 });
 

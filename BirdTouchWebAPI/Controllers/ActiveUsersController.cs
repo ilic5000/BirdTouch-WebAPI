@@ -222,7 +222,16 @@ namespace BirdTouchWebAPI.Controllers
                     var listOfUsersPrivateInfo = await _applicationContext
                         .UserInfo
                         .AsNoTracking()
-                        .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId))
+                        .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId)
+                                    && (!string.IsNullOrEmpty(u.Firstname)
+                                        || !string.IsNullOrEmpty(u.Lastname))
+                                    && (!string.IsNullOrEmpty(u.Phonenumber)
+                                        || !string.IsNullOrEmpty(u.Description) //TODO: Maybe remove description in future
+                                        || !string.IsNullOrEmpty(u.Fblink)
+                                        || !string.IsNullOrEmpty(u.Twlink)
+                                        || !string.IsNullOrEmpty(u.Gpluslink)
+                                        || !string.IsNullOrEmpty(u.Linkedinlink)
+                                        || !string.IsNullOrEmpty(u.Email)))
                         .Select(
                         u => new
                         {
