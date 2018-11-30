@@ -102,6 +102,8 @@ namespace BirdTouchWebAPI.Controllers
                     User = new
                     {
                         Id = justCreatedUser.Id,
+                        Firstname = loginCredentials.Firstname,
+                        Lastname = loginCredentials.Lastname,
                         Username = justCreatedUser.UserName
                     },
                     JwtToken = JWTGenerator.GenerateJWTToken(_configuration, claims)
