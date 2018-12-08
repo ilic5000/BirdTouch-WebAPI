@@ -96,7 +96,7 @@ namespace BirdTouchWebAPI.Controllers
                     JwtToken = JWTGenerator.GenerateJWTToken(_configuration, claims)
                 });
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return BadRequest();
             }

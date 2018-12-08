@@ -10,7 +10,7 @@ namespace BirdTouchWebAPI.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            return Ok("BirdtouchAPI has started successfully.");
+            return Ok("BirdtouchAPI is running.");
         }
     }
 }
