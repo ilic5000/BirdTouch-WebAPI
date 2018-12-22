@@ -194,9 +194,10 @@ namespace BirdTouchWebAPI.Controllers
                 // TODO: Remove when live
                 Console.WriteLine();
                 Console.WriteLine($"User {activeUser.FkUserId} at location:");
-                Console.WriteLine($"Latitude: {activeUser.LocationLatitude}");
-                Console.WriteLine($"Longitude: {activeUser.LocationLongitude}");
+                Console.WriteLine($" Latitude: {activeUser.LocationLatitude}");
+                Console.WriteLine($" Longitude: {activeUser.LocationLongitude}");
                 Console.WriteLine($"is searching users at radius of {radiusOfSearch} km in mode: {activeMode}");
+                Console.WriteLine($"time {DateTime.UtcNow}");
 
                 var listOfUsersIdNearMe = await _applicationContext
                                             .ActiveUsers
@@ -240,7 +241,8 @@ namespace BirdTouchWebAPI.Controllers
                     Console.WriteLine($" {userFromDb.FkUserId} with distance {activeUserCoordinates.DistanceTo((double)userFromDb.LocationLatitude, (double)userFromDb.LocationLongitude)}");
                 }
 
-                Console.WriteLine("------------------- end of list of near users");
+                Console.WriteLine();
+                Console.WriteLine();
 
                 if (activeMode.ToString() == ActiveModesConstants.PRIVATE)
                 {
