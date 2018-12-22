@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,12 +13,18 @@ namespace BirdTouchWebAPI.ScheduledTasks
         private readonly ILogger _logger;
         private Timer _timer;
         private IConfiguration _configuration;
+        private IHttpContextAccessor _httpContextAccessor;
+        private int _removeUsersOlderThan;
+        private int _removalPeriod;
 
         public RemoveInactiveUsersScheduledTask(ILogger<RemoveInactiveUsersScheduledTask> logger,
-                                                IConfiguration configuration)
+                                                IConfiguration configuration,
+                                                IHttpContextAccessor hTTPAccessor)
         {
             _logger = logger;
             _configuration = configuration;
+            _removeUsersOlderThan = int.Parse(_configuration["RemoveInactiveUsersRemoveUsersOlderThan"]);
+            _removalPeriod = int.Parse(_configuration["RemoveInactiveUsersRunEvery"]);
         }
 
         public void Dispose()
@@ -29,8 +36,8 @@ namespace BirdTouchWebAPI.ScheduledTasks
         {
             _logger.LogInformation($"RemoveInactiveUsersScheduledTask is starting. {DateTime.UtcNow}");
             _logger.LogInformation($"Removing user that have been inactive for " +
-                                   $"{_configuration["RemoveInactiveUsersRemoveUsersOlderThan"]} hours.");
-            _logger.LogInformation($"Task will run every {_configuration["RemoveInactiveUsersRunEvery"]} minutes.");
+                                   $"{_removeUsersOlderThan} hours.");
+            _logger.LogInformation($"Task will run every {_removalPeriod} minutes.");
 
             _timer = new Timer(RemoveInactiveUsers,
                                null,
@@ -43,6 +50,19 @@ namespace BirdTouchWebAPI.ScheduledTasks
         private void RemoveInactiveUsers(object state)
         {
             _logger.LogInformation($"RemoveInactiveUsersScheduledTask is working. {DateTime.UtcNow}");
+
+            //var applicationDbContext = (ApplicationDbContext)_httpContextAccessor
+            //                                                    .HttpContext
+            //                                                    .RequestServices
+            //                                                    .GetService(typeof(ApplicationDbContext));
+            //var listForRemoval = applicationDbContext
+            //                     .ActiveUsers
+            //                     .Where(u => (DateTime.Now - u.DatetimeLastUpdate).Hours > _removeUsersOlderThan)
+            //                     .ToList();
+
+            //applicationDbContext.RemoveRange(listForRemoval);
+
+            //applicationDbContext.SaveChanges();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

@@ -191,6 +191,13 @@ namespace BirdTouchWebAPI.Controllers
                     Longitude = (double)activeUser.LocationLongitude
                 };
 
+                // TODO: Remove when live
+                Console.WriteLine();
+                Console.WriteLine($"User {activeUser.FkUserId} at location:");
+                Console.WriteLine($"Latitude: {activeUser.LocationLatitude}");
+                Console.WriteLine($"Longitude: {activeUser.LocationLongitude}");
+                Console.WriteLine($"is searching users at radius of {radiusOfSearch} km in mode: {activeMode}");
+
                 var listOfUsersIdNearMe = await _applicationContext
                                             .ActiveUsers
                                             .AsNoTracking()
@@ -206,6 +213,10 @@ namespace BirdTouchWebAPI.Controllers
 
                 if (listOfUsersIdNearMe.Count == 0)
                 {
+                    // TODO: Remove when live
+                    Console.WriteLine("Found 0 users");
+                    Console.WriteLine();
+
                     if (activeMode.ToString() == ActiveModesConstants.PRIVATE)
                     {
                         return Ok(JsonConvert.SerializeObject(new List<UserInfo>()));
@@ -216,6 +227,20 @@ namespace BirdTouchWebAPI.Controllers
                         return Ok(JsonConvert.SerializeObject(new List<BusinessInfo>()));
                     }
                 }
+
+                // TODO: Remove when live
+                Console.WriteLine("Found: ");
+                foreach (var userIdFromList in listOfUsersIdNearMe)
+                {
+                    var userFromDb = await _applicationContext.ActiveUsers.AsNoTracking().
+                                                                           Where(a => a.FkUserId == userIdFromList
+                                                                                      && a.ActiveMode == activeMode)
+                                                                           .FirstOrDefaultAsync();
+
+                    Console.WriteLine($" {userFromDb.FkUserId} with distance {activeUserCoordinates.DistanceTo((double)userFromDb.LocationLatitude, (double)userFromDb.LocationLongitude)}");
+                }
+
+                Console.WriteLine("------------------- end of list of near users");
 
                 if (activeMode.ToString() == ActiveModesConstants.PRIVATE)
                 {
