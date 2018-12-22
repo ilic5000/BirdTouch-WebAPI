@@ -3,10 +3,12 @@ using BirdTouchWebAPI.Data.Application;
 using BirdTouchWebAPI.Data.Identity;
 using BirdTouchWebAPI.Models;
 using BirdTouchWebAPI.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -32,6 +34,7 @@ namespace BirdTouchWebAPI.Controllers
         /// </summary>
         protected SignInManager<ApplicationUser> _signInManager;
         protected IConfiguration _configuration;
+        private readonly ILogger _logger;
         #endregion
 
         #region Constructor
@@ -43,12 +46,14 @@ namespace BirdTouchWebAPI.Controllers
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<UsersController> logger)
         {
             _applicationContext = context;
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _logger = logger;
         }
         #endregion
 
@@ -168,6 +173,40 @@ namespace BirdTouchWebAPI.Controllers
             {
                 return BadRequest();
             }
+        }
+
+        [HttpDelete]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> Delete()
+        {
+            var userId = User
+                        .Claims
+                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new NullReferenceException("UserId is missing");
+            }
+
+            var userIdGuid = Guid.Parse(userId);
+
+            _applicationContext.RemoveRange(_applicationContext.SavedPrivate.Where(sp => sp.FkUserId == userIdGuid
+                                                                                         || sp.FkSavedContactId == userIdGuid)
+                                                                                         .ToList());
+            _applicationContext.RemoveRange(_applicationContext.SavedBusiness.Where(sp => sp.FkUserId == userIdGuid
+                                                                                         || sp.FkSavedContactId == userIdGuid)
+                                                                                         .ToList());
+            _applicationContext.RemoveRange(_applicationContext.ActiveUsers.Where(sp => sp.FkUserId == userIdGuid)
+                                                                                         .ToList());
+            _applicationContext.Remove(_applicationContext.UserInfo.Where(sp => sp.FkUserId == userIdGuid));
+            _applicationContext.Remove(_applicationContext.BusinessInfo.Where(sp => sp.FkUserId == userIdGuid));
+            _applicationContext.Remove(_applicationContext.AspNetUsers.Where(sp => sp.Id == userIdGuid));
+
+            await _applicationContext.SaveChangesAsync();
+
+            _logger.LogWarning($"User {userId} has been removed from the system. Press F to pay respects");
+
+            return Ok();
         }
     }
 }
