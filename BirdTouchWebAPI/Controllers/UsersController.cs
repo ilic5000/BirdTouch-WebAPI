@@ -190,17 +190,28 @@ namespace BirdTouchWebAPI.Controllers
 
             var userIdGuid = Guid.Parse(userId);
 
-            _applicationContext.RemoveRange(_applicationContext.SavedPrivate.Where(sp => sp.FkUserId == userIdGuid
+            var savedPrivateForRemoval = _applicationContext.SavedPrivate.Where(sp => sp.FkUserId == userIdGuid
                                                                                          || sp.FkSavedContactId == userIdGuid)
-                                                                                         .ToList());
-            _applicationContext.RemoveRange(_applicationContext.SavedBusiness.Where(sp => sp.FkUserId == userIdGuid
+                                                                                         .ToList();
+            _applicationContext.RemoveRange(savedPrivateForRemoval);
+
+            var savedBusinessForRemoval = _applicationContext.SavedBusiness.Where(sp => sp.FkUserId == userIdGuid
                                                                                          || sp.FkSavedContactId == userIdGuid)
-                                                                                         .ToList());
-            _applicationContext.RemoveRange(_applicationContext.ActiveUsers.Where(sp => sp.FkUserId == userIdGuid)
-                                                                                         .ToList());
-            _applicationContext.Remove(_applicationContext.UserInfo.Where(sp => sp.FkUserId == userIdGuid));
-            _applicationContext.Remove(_applicationContext.BusinessInfo.Where(sp => sp.FkUserId == userIdGuid));
-            _applicationContext.Remove(_applicationContext.AspNetUsers.Where(sp => sp.Id == userIdGuid));
+                                                                                         .ToList();
+            _applicationContext.RemoveRange(savedBusinessForRemoval);
+
+            var activeUsersForRemoval = _applicationContext.ActiveUsers.Where(sp => sp.FkUserId == userIdGuid)
+                                                                                         .ToList();
+            _applicationContext.RemoveRange(activeUsersForRemoval);
+
+            var userInfoForRemoval = _applicationContext.UserInfo.Where(sp => sp.FkUserId == userIdGuid).FirstOrDefault();
+            _applicationContext.Remove(userInfoForRemoval);
+
+            var businessInfoForRemoval = _applicationContext.BusinessInfo.Where(sp => sp.FkUserId == userIdGuid).FirstOrDefault();
+            _applicationContext.Remove(businessInfoForRemoval);
+
+            var userForRemoval = _applicationContext.AspNetUsers.Where(sp => sp.Id == userIdGuid).FirstOrDefault();
+            _applicationContext.Remove(userForRemoval);
 
             await _applicationContext.SaveChangesAsync();
 
