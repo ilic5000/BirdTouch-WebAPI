@@ -287,7 +287,9 @@ namespace BirdTouchWebAPI.Controllers
                     var listOfUsersBusinessInfo = await _applicationContext
                         .BusinessInfo
                         .AsNoTracking()
-                        .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId))
+                        .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId)
+                                    && !string.IsNullOrEmpty(u.Email)
+                                    && !string.IsNullOrEmpty(u.Companyname))
                         .Select(
                         u => new
                         {
