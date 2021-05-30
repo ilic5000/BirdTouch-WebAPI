@@ -13,13 +13,11 @@ namespace BirdTouchWebAPI.ScheduledTasks
         private readonly ILogger _logger;
         private Timer _timer;
         private IConfiguration _configuration;
-        private IHttpContextAccessor _httpContextAccessor;
         private int _removeUsersOlderThan;
         private int _removalPeriod;
 
         public RemoveInactiveUsersScheduledTask(ILogger<RemoveInactiveUsersScheduledTask> logger,
-                                                IConfiguration configuration,
-                                                IHttpContextAccessor hTTPAccessor)
+                                                IConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;

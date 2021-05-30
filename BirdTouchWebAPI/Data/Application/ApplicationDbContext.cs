@@ -72,7 +72,7 @@ namespace BirdTouchWebAPI.Data.Application
                 entity.ToTable("asp_net_role_claims");
 
                 entity.HasIndex(e => e.RoleId)
-                    .HasName("ix_asp_net_role_claims_role_id");
+                    .HasDatabaseName("ix_asp_net_role_claims_role_id");
 
                 entity.Property(e => e.Id).HasColumnName("id");
 
@@ -93,7 +93,7 @@ namespace BirdTouchWebAPI.Data.Application
                 entity.ToTable("asp_net_roles");
 
                 entity.HasIndex(e => e.NormalizedName)
-                    .HasName("role_name_index")
+                    .HasDatabaseName("role_name_index")
                     .IsUnique();
 
                 entity.Property(e => e.Id)
@@ -116,7 +116,7 @@ namespace BirdTouchWebAPI.Data.Application
                 entity.ToTable("asp_net_user_claims");
 
                 entity.HasIndex(e => e.UserId)
-                    .HasName("ix_asp_net_user_claims_user_id");
+                    .HasDatabaseName("ix_asp_net_user_claims_user_id");
 
                 entity.Property(e => e.Id).HasColumnName("id");
 
@@ -139,7 +139,7 @@ namespace BirdTouchWebAPI.Data.Application
                 entity.ToTable("asp_net_user_logins");
 
                 entity.HasIndex(e => e.UserId)
-                    .HasName("ix_asp_net_user_logins_user_id");
+                    .HasDatabaseName("ix_asp_net_user_logins_user_id");
 
                 entity.Property(e => e.LoginProvider).HasColumnName("login_provider");
 
@@ -162,7 +162,7 @@ namespace BirdTouchWebAPI.Data.Application
                 entity.ToTable("asp_net_user_roles");
 
                 entity.HasIndex(e => e.RoleId)
-                    .HasName("ix_asp_net_user_roles_role_id");
+                    .HasDatabaseName("ix_asp_net_user_roles_role_id");
 
                 entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -184,10 +184,10 @@ namespace BirdTouchWebAPI.Data.Application
                 entity.ToTable("asp_net_users");
 
                 entity.HasIndex(e => e.NormalizedEmail)
-                    .HasName("email_index");
+                    .HasDatabaseName("email_index");
 
                 entity.HasIndex(e => e.NormalizedUserName)
-                    .HasName("user_name_index")
+                    .HasDatabaseName("user_name_index")
                     .IsUnique();
 
                 entity.Property(e => e.Id)

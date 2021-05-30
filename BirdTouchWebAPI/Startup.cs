@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
@@ -62,13 +63,13 @@ namespace BirdTouchWebAPI
                 options.Password.RequireNonAlphanumeric = false;
             });
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
             services.AddHostedService<RemoveInactiveUsersScheduledTask>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             // Enable all authentications added in configure services
             app.UseAuthentication();
@@ -82,8 +83,6 @@ namespace BirdTouchWebAPI
                 app.UseHsts();
                 app.UseHttpsRedirection();
             }
-
-            app.UseMvc();
         }
     }
 }

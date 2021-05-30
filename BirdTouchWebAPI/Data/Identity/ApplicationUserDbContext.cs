@@ -29,39 +29,6 @@ namespace BirdTouchWebAPI.Data.Identity
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            foreach (var entity in modelBuilder.Model.GetEntityTypes())
-            {
-                // Replace table names
-                entity.Relational().TableName = entity.Relational().TableName.ToSnakeCase();
-
-                // Replace column names
-                foreach (var property in entity.GetProperties())
-                {
-                    property.Relational().ColumnName = property.Name.ToSnakeCase();
-                }
-
-                foreach (var key in entity.GetKeys())
-                {
-                    key.Relational().Name = key.Relational().Name.ToSnakeCase();
-                }
-
-                foreach (var key in entity.GetForeignKeys())
-                {
-                    key.Relational().Name = key.Relational().Name.ToSnakeCase();
-                }
-
-                foreach (var index in entity.GetIndexes())
-                {
-                    index.Relational().Name = index.Relational().Name.ToSnakeCase();
-                }
-            }
-
-            // On second thought, maybe is better to use the default naming convention, eg. asp_net_users
-            //modelBuilder.Entity<ApplicationUser>(entity =>
-            //{
-            //    entity.ToTable(name: "users");
-            //});
         }
     }
 }
