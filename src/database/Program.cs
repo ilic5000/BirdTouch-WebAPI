@@ -3,6 +3,7 @@ using DbUp.Engine;
 using DbUp.Support;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Threading;
 
 namespace DatabaseMigrator
 {
@@ -19,7 +20,19 @@ namespace DatabaseMigrator
 
             var connectionString = config.GetConnectionString("DefaultConnection");
 
-            EnsureDatabase.For.PostgresqlDatabase(connectionString);
+            // Try to ensure database is created for 1 min (sometimes database service is unavailable because it's still starting up)
+            for (int i = 0; i < 60; i++)
+            {
+                try
+                {
+                    EnsureDatabase.For.PostgresqlDatabase(connectionString);
+                    break;
+                }
+                catch (Exception)
+                {
+                    Thread.Sleep(1000);
+                }
+            }
 
             var upgrader = DeployChanges.To
                                         .PostgresqlDatabase(connectionString)
