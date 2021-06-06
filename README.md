@@ -11,7 +11,7 @@ Server is written in .NET 5.0 using PostgreSQL database.
 # Installation
 
 - Configure `.env` file (see Configuration section)
-- Run `docker-compose up` from the root of this repo
+- Run `docker-compose up -d` from the root of this repo
 - Run `docker-compose ps` to check if all services are up and running
     - Note: `database-migration` service should be in State `Exit 0`
 - Congratulations! WebAPI is now available on port `4050`
