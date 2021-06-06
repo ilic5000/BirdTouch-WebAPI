@@ -1,12 +1,25 @@
-version: '3'
+version: '2.4'
 
 services:
-  birdtouchserverrestfulapi:
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+  birdtouch-api:
+    env_file: .env
     ports:
-      - "80"
-networks:
-  default:
-    external:
-      name: nat
+      - "4050:80"
+  database-migration:
+    env_file: .env
+  pgadmin:
+    env_file: .env
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./servers.pgadmin.json:/pgadmin4/servers.json
+  birdtouch-db:
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - envdata:/var/lib/postgresql/data
+
+# Volume for postgresql database (to prevent data loss upon restarting docker services)
+volumes:
+  envdata:

@@ -1,6 +1,6 @@
 CREATE DATABASE birdtouch
     WITH
-      OWNER = birdtouch_user
+      OWNER = postgres
       ENCODING = 'UTF8'
       LC_COLLATE = 'Serbian (Latin)_Serbia.1250'
       LC_CTYPE = 'Serbian (Latin)_Serbia.1250'

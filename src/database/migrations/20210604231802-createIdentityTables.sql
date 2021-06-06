@@ -27,7 +27,7 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE public.asp_net_users
-    OWNER to birdtouch_user;
+    OWNER to postgres;
 
 -- Index: email_index
 
@@ -66,7 +66,7 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE public.asp_net_roles
-    OWNER to birdtouch_user;
+    OWNER to postgres;
 
 -- Index: role_name_index
 
@@ -103,7 +103,7 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE public.asp_net_user_roles
-    OWNER to birdtouch_user;
+    OWNER to postgres;
 
 -- Index: ix_asp_net_user_roles_role_id
 
@@ -138,7 +138,7 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE public.asp_net_user_tokens
-    OWNER to birdtouch_user;
+    OWNER to postgres;
 
 
 -- Table: public.asp_net_user_logins
@@ -163,7 +163,7 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE public.asp_net_user_logins
-    OWNER to birdtouch_user;
+    OWNER to postgres;
 
 -- Index: ix_asp_net_user_logins_user_id
 
@@ -182,7 +182,7 @@ CREATE INDEX IF NOT EXISTS ix_asp_net_user_logins_user_id
 CREATE SEQUENCE IF NOT EXISTS public.asp_net_user_claims_id_seq;
 
 ALTER SEQUENCE public.asp_net_user_claims_id_seq
-    OWNER TO birdtouch_user;
+    OWNER TO postgres;
 
 
 -- Table: public.asp_net_user_claims
@@ -207,7 +207,7 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE public.asp_net_user_claims
-    OWNER to birdtouch_user;
+    OWNER to postgres;
 
 -- Index: ix_asp_net_user_claims_user_id
 
@@ -225,7 +225,7 @@ CREATE INDEX IF NOT EXISTS ix_asp_net_user_claims_user_id
 CREATE SEQUENCE IF NOT EXISTS public.asp_net_role_claims_id_seq;
 
 ALTER SEQUENCE public.asp_net_role_claims_id_seq
-    OWNER TO birdtouch_user;
+    OWNER TO postgres;
 
 -- Table: public.asp_net_role_claims
 
@@ -249,7 +249,7 @@ WITH (
 TABLESPACE pg_default;
 
 ALTER TABLE public.asp_net_role_claims
-    OWNER to birdtouch_user;
+    OWNER to postgres;
 
 -- Index: ix_asp_net_role_claims_role_id
 

@@ -1,8 +1,28 @@
-version: '3'
+version: '2.4'
 
 services:
-  birdtouchserverrestfulapi:
-    image: birdtouchserverrestfulapi
+  birdtouch-api:
+    image: birdtouch-api
     build:
-      context: ./BirdTouchServerRESTfulAPI
+      context: src/api
       dockerfile: Dockerfile
+    depends_on:
+      database-migration:
+        condition: service_started
+      birdtouch-db:
+        condition: service_started
+  database-migration:
+    image: database-migration
+    build:
+      context: src/database
+      dockerfile: Dockerfile
+    depends_on:
+      birdtouch-db:
+        condition: service_started
+  pgadmin:
+    image: dpage/pgadmin4
+    depends_on:
+      birdtouch-db:
+        condition: service_started
+  birdtouch-db:
+    image: postgres:13.3-alpine
