@@ -27,3 +27,16 @@ All of the configuration is done by editing [.env](https://github.com/ilic5000/B
 * Optional:
     * `RemoveInactiveUsersRunEvery` scheduled task that will check if there are inactive users
     * `RemoveInactiveUsersRemoveUsersOlderThan` set how many hours of inactivity are considered for user to be in inactive state
+
+# Good to know specifics
+
+## Obtaining IP address of the WSL2 Linux container
+
+If you are using WSL2 on Windows10 and have Linux container where you installed docker, in order to access Birdtouch WebAPI (e.g. from the Birdtouch Client running on Android emulator) you need to found out the WSL2 session's IP address. 
+
+Do the following procedure:
+
+1. Login to Linux machine with WSL2
+2. Execute `ifconfig`
+3. Find the `net` value of the `eth0:`, for example it would be `172.22.200.173`
+4. Congratulations, now you can access your Birdtouch WebAPI running on WSL2 Linux container via `172.22.200.173:4050` 

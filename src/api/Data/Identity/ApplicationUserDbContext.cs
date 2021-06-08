@@ -4,13 +4,10 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BirdTouchWebAPI.Data.Identity
 {
-    public class ApplicationUserDbContext: IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    public class ApplicationUserDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
     {
         public IConfiguration _configuration;
 
@@ -29,6 +26,33 @@ namespace BirdTouchWebAPI.Data.Identity
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            foreach (var entity in modelBuilder.Model.GetEntityTypes())
+            {
+                // Replace table names
+                entity.SetTableName(entity.GetTableName().ToSnakeCase());
+
+                // Replace column names
+                foreach (var property in entity.GetProperties())
+                {
+                    property.SetColumnName(property.Name.ToSnakeCase());
+                }
+
+                foreach (var key in entity.GetKeys())
+                {
+                    key.SetName(key.GetName().ToSnakeCase());
+                }
+
+                foreach (var foreignKey in entity.GetForeignKeys())
+                {
+                    foreignKey.SetConstraintName(foreignKey.GetConstraintName().ToSnakeCase());
+                }
+
+                foreach (var index in entity.GetIndexes())
+                {
+                    index.SetName(index.GetName().ToSnakeCase());
+                }
+            }
         }
     }
 }
