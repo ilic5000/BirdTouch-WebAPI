@@ -14,7 +14,22 @@ Server is written in .NET 5.0 using PostgreSQL database.
 - Run `docker-compose up -d` from the root of this repo
 - Run `docker-compose ps` to check if all services are up and running
     - Note: `database-migration` service should be in State `Exit 0`
-- Congratulations! WebAPI is now available on port `4050`
+- Congratulations! WebAPI (with database) is now available on port `4050`
+
+## [OPTIONAL] Database migration (upgrade/new sql scripts)
+
+All SQL scripts used to create database and to insert necessary data are located in the [migrations folder](https://github.com/ilic5000/BirdTouch-WebAPI/tree/master/src/database/migrations).
+
+In order to add custom new scripts or execute database upgrade, please follow the following procedure:
+
+1. Create new .sql script following the naming convention in the [migrations folder](https://github.com/ilic5000/BirdTouch-WebAPI/tree/master/src/database/migrations) - idea is that scripts are alphabetically sorted in order to have some sort of the order of execution.
+
+2. Note that scripts that are once executed will not be executed again on the same database (to check if script is executed, script name is used)
+
+3. When you have all the necessary scripts now added to the [migrations folder](https://github.com/ilic5000/BirdTouch-WebAPI/tree/master/src/database/migrations), please execute:
+    
+    `docker-compose up database-migration --build`
+
 
 # Configuration
 All of the configuration is done by editing [.env](https://github.com/ilic5000/BirdTouch-WebAPI/blob/master/BirdTouchWebAPI/.env) file. 

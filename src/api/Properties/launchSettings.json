@@ -17,14 +17,14 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "BirdTouchWebAPI": {
+    "BirdTouchWebAPI (Kestrel)": {
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "api/welcome",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+      "applicationUrl": "https://localhost:5001;http://*:5000"
     },
     "WSL 2": {
       "commandName": "WSL2",
