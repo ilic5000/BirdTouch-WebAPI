@@ -154,166 +154,159 @@ namespace BirdTouchWebAPI.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> GetUsersNearMe(int? activeMode, double? radiusOfSearch)
         {
-            try
+            var userId = User
+                    .Claims
+                    .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+
+            if (string.IsNullOrEmpty(userId))
             {
-                var userId = User
-                        .Claims
-                        .FirstOrDefault(c => c.Type == ClaimsConstants.USERID).Value;
+                throw new NullReferenceException("UserId is missing");
+            }
 
-                if (string.IsNullOrEmpty(userId))
-                {
-                    throw new NullReferenceException("UserId is missing");
-                }
+            if (radiusOfSearch == null
+                || radiusOfSearch == 0)
+            {
+                return BadRequest();
+            }
 
-                if (radiusOfSearch == null
-                    || radiusOfSearch == 0)
-                {
-                    return BadRequest();
-                }
+            var activeUser = await _applicationContext
+                                    .ActiveUsers
+                                    .AsNoTracking()
+                                    .FirstOrDefaultAsync(u =>
+                                        u.FkUserId == Guid.Parse(userId)
+                                        && u.ActiveMode == activeMode);
 
-                var activeUser = await _applicationContext
+            if (activeUser == null
+                || activeUser.LocationLatitude == null
+                || activeUser.LocationLongitude == null)
+            {
+                return BadRequest();
+            }
+
+            var activeUserCoordinates = new Coordinate()
+            {
+                Latitude = (double)activeUser.LocationLatitude,
+                Longitude = (double)activeUser.LocationLongitude
+            };
+
+            // TODO: Remove when live
+            Console.WriteLine();
+            Console.WriteLine($"User {activeUser.FkUserId} at location:");
+            Console.WriteLine($" Latitude: {activeUser.LocationLatitude}");
+            Console.WriteLine($" Longitude: {activeUser.LocationLongitude}");
+            Console.WriteLine($"is searching users at radius of {radiusOfSearch} km in mode: {activeMode}");
+            Console.WriteLine($"time {DateTime.UtcNow}");
+
+            var listOfUsersIdNearMe = await _applicationContext
                                         .ActiveUsers
                                         .AsNoTracking()
-                                        .FirstOrDefaultAsync(u =>
-                                            u.FkUserId == Guid.Parse(userId)
-                                            && u.ActiveMode == activeMode);
+                                        .Where(u => u.ActiveMode == activeMode
+                                                 && u.FkUserId != activeUser.FkUserId
+                                                 && activeUserCoordinates
+                                                      .DistanceTo(
+                                                        (double)u.LocationLatitude,
+                                                        (double)u.LocationLongitude)
+                                                    < radiusOfSearch)
+                                        .Select(u => u.FkUserId)
+                                        .ToListAsync();
 
-                if (activeUser == null
-                    || activeUser.LocationLatitude == null
-                    || activeUser.LocationLongitude == null)
-                {
-                    return BadRequest();
-                }
-
-                var activeUserCoordinates = new Coordinate()
-                {
-                    Latitude = (double)activeUser.LocationLatitude,
-                    Longitude = (double)activeUser.LocationLongitude
-                };
-
+            if (listOfUsersIdNearMe.Count == 0)
+            {
                 // TODO: Remove when live
-                Console.WriteLine();
-                Console.WriteLine($"User {activeUser.FkUserId} at location:");
-                Console.WriteLine($" Latitude: {activeUser.LocationLatitude}");
-                Console.WriteLine($" Longitude: {activeUser.LocationLongitude}");
-                Console.WriteLine($"is searching users at radius of {radiusOfSearch} km in mode: {activeMode}");
-                Console.WriteLine($"time {DateTime.UtcNow}");
-
-                var listOfUsersIdNearMe = await _applicationContext
-                                            .ActiveUsers
-                                            .AsNoTracking()
-                                            .Where(u => u.ActiveMode == activeMode
-                                                     && u.FkUserId != activeUser.FkUserId
-                                                     && activeUserCoordinates
-                                                          .DistanceTo(
-                                                            (double)u.LocationLatitude,
-                                                            (double)u.LocationLongitude)
-                                                        < radiusOfSearch)
-                                            .Select(u => u.FkUserId)
-                                            .ToListAsync();
-
-                if (listOfUsersIdNearMe.Count == 0)
-                {
-                    // TODO: Remove when live
-                    Console.WriteLine("Found 0 users");
-                    Console.WriteLine();
-
-                    if (activeMode.ToString() == ActiveModesConstants.PRIVATE)
-                    {
-                        return Ok(JsonConvert.SerializeObject(new List<UserInfo>()));
-                    }
-
-                    if (activeMode.ToString() == ActiveModesConstants.BUSINESS)
-                    {
-                        return Ok(JsonConvert.SerializeObject(new List<BusinessInfo>()));
-                    }
-                }
-
-                // TODO: Remove when live
-                Console.WriteLine("Found: ");
-                foreach (var userIdFromList in listOfUsersIdNearMe)
-                {
-                    var userFromDb = await _applicationContext.ActiveUsers.AsNoTracking().
-                                                                           Where(a => a.FkUserId == userIdFromList
-                                                                                      && a.ActiveMode == activeMode)
-                                                                           .FirstOrDefaultAsync();
-
-                    Console.WriteLine($" {userFromDb.FkUserId} with distance {activeUserCoordinates.DistanceTo((double)userFromDb.LocationLatitude, (double)userFromDb.LocationLongitude)}");
-                }
-
-                Console.WriteLine();
+                Console.WriteLine("Found 0 users");
                 Console.WriteLine();
 
                 if (activeMode.ToString() == ActiveModesConstants.PRIVATE)
                 {
-                    var listOfUsersPrivateInfo = await _applicationContext
-                        .UserInfo
-                        .AsNoTracking()
-                        .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId)
-                                    && (!string.IsNullOrEmpty(u.Firstname)
-                                        || !string.IsNullOrEmpty(u.Lastname))
-                                    && (!string.IsNullOrEmpty(u.Phonenumber)
-                                        || !string.IsNullOrEmpty(u.Description) //TODO: Maybe remove description in future
-                                        || !string.IsNullOrEmpty(u.Fblink)
-                                        || !string.IsNullOrEmpty(u.Twlink)
-                                        || !string.IsNullOrEmpty(u.Gpluslink)
-                                        || !string.IsNullOrEmpty(u.Linkedinlink)
-                                        || !string.IsNullOrEmpty(u.Email)))
-                        .Select(
-                        u => new
-                        {
-                            u.FkUserId,
-                            u.Adress,
-                            u.Dateofbirth,
-                            u.Description,
-                            u.Email,
-                            u.Fblink,
-                            u.Firstname,
-                            u.Lastname,
-                            u.Gpluslink,
-                            u.Id,
-                            u.Linkedinlink,
-                            u.Phonenumber,
-                            u.Profilepicturedata,
-                            u.Twlink
-                        })
-                        .ToListAsync();
-
-                    return (Ok(JsonConvert.SerializeObject(listOfUsersPrivateInfo)));
+                    return Ok(JsonConvert.SerializeObject(new List<UserInfo>()));
                 }
 
                 if (activeMode.ToString() == ActiveModesConstants.BUSINESS)
                 {
-                    var listOfUsersBusinessInfo = await _applicationContext
-                        .BusinessInfo
-                        .AsNoTracking()
-                        .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId)
-                                    && !string.IsNullOrEmpty(u.Email)
-                                    && !string.IsNullOrEmpty(u.Companyname))
-                        .Select(
-                        u => new
-                        {
-                            u.Adress,
-                            u.Companyname,
-                            u.Description,
-                            u.Email,
-                            u.FkUserId,
-                            u.Id,
-                            u.Phonenumber,
-                            u.Profilepicturedata,
-                            u.Website
-                        })
-                        .ToListAsync();
-
-                    return (Ok(JsonConvert.SerializeObject(listOfUsersBusinessInfo)));
+                    return Ok(JsonConvert.SerializeObject(new List<BusinessInfo>()));
                 }
+            }
 
-                return BadRequest();
-            }
-            catch (Exception e)
+            // TODO: Remove when live
+            Console.WriteLine("Found: ");
+            foreach (var userIdFromList in listOfUsersIdNearMe)
             {
-                return BadRequest(e.InnerException);
+                var userFromDb = await _applicationContext.ActiveUsers.AsNoTracking().
+                                                                       Where(a => a.FkUserId == userIdFromList
+                                                                                  && a.ActiveMode == activeMode)
+                                                                       .FirstOrDefaultAsync();
+
+                Console.WriteLine($" {userFromDb.FkUserId} with distance {activeUserCoordinates.DistanceTo((double)userFromDb.LocationLatitude, (double)userFromDb.LocationLongitude)}");
             }
+
+            Console.WriteLine();
+            Console.WriteLine();
+
+            if (activeMode.ToString() == ActiveModesConstants.PRIVATE)
+            {
+                var listOfUsersPrivateInfo = await _applicationContext
+                    .UserInfo
+                    .AsNoTracking()
+                    .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId)
+                                && (!string.IsNullOrEmpty(u.Firstname)
+                                    || !string.IsNullOrEmpty(u.Lastname))
+                                && (!string.IsNullOrEmpty(u.Phonenumber)
+                                    || !string.IsNullOrEmpty(u.Description) //TODO: Maybe remove description in future
+                                    || !string.IsNullOrEmpty(u.Fblink)
+                                    || !string.IsNullOrEmpty(u.Twlink)
+                                    || !string.IsNullOrEmpty(u.Gpluslink)
+                                    || !string.IsNullOrEmpty(u.Linkedinlink)
+                                    || !string.IsNullOrEmpty(u.Email)))
+                    .Select(
+                    u => new
+                    {
+                        u.FkUserId,
+                        u.Adress,
+                        u.Dateofbirth,
+                        u.Description,
+                        u.Email,
+                        u.Fblink,
+                        u.Firstname,
+                        u.Lastname,
+                        u.Gpluslink,
+                        u.Id,
+                        u.Linkedinlink,
+                        u.Phonenumber,
+                        u.Profilepicturedata,
+                        u.Twlink
+                    })
+                    .ToListAsync();
+
+                return (Ok(JsonConvert.SerializeObject(listOfUsersPrivateInfo)));
+            }
+
+            if (activeMode.ToString() == ActiveModesConstants.BUSINESS)
+            {
+                var listOfUsersBusinessInfo = await _applicationContext
+                    .BusinessInfo
+                    .AsNoTracking()
+                    .Where(u => listOfUsersIdNearMe.Contains(u.FkUserId)
+                                && !string.IsNullOrEmpty(u.Email)
+                                && !string.IsNullOrEmpty(u.Companyname))
+                    .Select(
+                    u => new
+                    {
+                        u.Adress,
+                        u.Companyname,
+                        u.Description,
+                        u.Email,
+                        u.FkUserId,
+                        u.Id,
+                        u.Phonenumber,
+                        u.Profilepicturedata,
+                        u.Website
+                    })
+                    .ToListAsync();
+
+                return (Ok(JsonConvert.SerializeObject(listOfUsersBusinessInfo)));
+            }
+
+            return BadRequest();
         }
     }
 }
