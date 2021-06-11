@@ -74,7 +74,10 @@ namespace BirdTouchWebAPI.Controllers
                 if (!result.Succeeded)
                 {
                     // TODO: Add types of incorrect password format and handle it in client
-                    return BadRequest();
+                    // For now only the first error will be returned as a header
+                    var firstErrorDescription = result.Errors.FirstOrDefault()?.Description;
+                    this.HttpContext.Response.Headers.Add("user-creation-first-error", firstErrorDescription);
+                    return BadRequest(firstErrorDescription);
                 }
 
                 var justCreatedUser = await _userManager.FindByNameAsync(loginCredentials.Username);

@@ -197,18 +197,20 @@ namespace BirdTouchWebAPI.Controllers
             Console.WriteLine($"is searching users at radius of {radiusOfSearch} km in mode: {activeMode}");
             Console.WriteLine($"time {DateTime.UtcNow}");
 
-            var listOfUsersIdNearMe = await _applicationContext
+            // TODO: Figure out some smarter way to do the fetching!
+            var listOfAllUsersIdNearMe = await _applicationContext
                                         .ActiveUsers
                                         .AsNoTracking()
                                         .Where(u => u.ActiveMode == activeMode
-                                                 && u.FkUserId != activeUser.FkUserId
-                                                 && activeUserCoordinates
-                                                      .DistanceTo(
-                                                        (double)u.LocationLatitude,
-                                                        (double)u.LocationLongitude)
-                                                    < radiusOfSearch)
-                                        .Select(u => u.FkUserId)
+                                                 && u.FkUserId != activeUser.FkUserId)
                                         .ToListAsync();
+
+            var listOfUsersIdNearMe = listOfAllUsersIdNearMe
+                                        .Where(user => activeUserCoordinates.
+                                                            DistanceTo((double)user.LocationLatitude,
+                                                                       (double)user.LocationLongitude) < radiusOfSearch)
+                                        .Select(u => u.FkUserId)
+                                        .ToList();
 
             if (listOfUsersIdNearMe.Count == 0)
             {
