@@ -55,3 +55,9 @@ Do the following procedure:
 2. Execute `ifconfig`
 3. Find the `net` value of the `eth0:`, for example it would be `172.22.200.173`
 4. Congratulations, now you can access your Birdtouch WebAPI running on WSL2 Linux container via `172.22.200.173:4050` 
+
+## If you want to serve WebAPI from you PC 
+
+1. [Check if port where WebAPI is working (usually 4050) is accessible to the world](https://www.portchecktool.com/?utm_source=DUC&utm_medium=duc-click&utm_campaign=duc-WINDOWS):
+2. If not, configure it to be! :) 
+3. [OPTIONAL] noip.com site provides DUC tools that synchronize your dynamic Ip Address to some hostname, that way, you can host anything from your local PC and not worry about Ip Address change
