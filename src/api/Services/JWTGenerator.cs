@@ -12,6 +12,12 @@ namespace BirdTouchWebAPI.Services
 {
     public static class JWTGenerator
     {
+        /// <summary>
+        /// Temporary solution for PoC
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <param name="claims"></param>
+        /// <returns></returns>
         public static string GenerateJWTToken(IConfiguration configuration, Claim[] claims)
         {
             var key = new SymmetricSecurityKey(

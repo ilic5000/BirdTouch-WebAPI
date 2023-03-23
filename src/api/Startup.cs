@@ -74,8 +74,6 @@ namespace BirdTouchWebAPI
             // Enable all authentications added in configure services
             app.UseAuthentication();
 
-            
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

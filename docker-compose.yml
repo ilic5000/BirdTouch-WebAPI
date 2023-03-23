@@ -25,4 +25,4 @@ services:
       birdtouch-db:
         condition: service_started
   birdtouch-db:
-    image: postgres:13.3-alpine
+    image: postgres:15.2-alpine
