@@ -1,0 +1,42 @@
+[project]
+name = "birdtouch-api"
+version = "2.0.0"
+description = "BirdTouch WebAPI - backend for the BirdTouch Android app"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.20.0",
+    "asyncpg>=0.31.0",
+    "fastapi>=0.141.1",
+    "pwdlib[argon2]>=0.3.1",
+    "pydantic[email]>=2.13.5",
+    "pydantic-settings>=2.15.0",
+    "pyjwt>=2.15.0",
+    "sqlalchemy[asyncio]>=2.1.1",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.9",
+]
+
+[tool.uv]
+# This is an application, not a library: dependencies are installed, the code is run from source.
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "ASYNC", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"

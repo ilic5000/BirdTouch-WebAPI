@@ -1,28 +1,61 @@
-version: '2.4'
+# The whole BirdTouch backend: `docker compose up -d --build`
+# Configuration is read from the .env file (copy .env.example to .env first).
+
+# Settings shared by the API and the migration service (merged into both below with `<<:`).
+x-birdtouch-api: &birdtouch-api
+  build: .
+  image: birdtouch-api
+  env_file: .env
+  environment:
+    POSTGRES_HOST: birdtouch-db
+    POSTGRES_PORT: 5432
 
 services:
   birdtouch-api:
-    image: birdtouch-api
-    build:
-      context: src/api
-      dockerfile: Dockerfile
+    <<: *birdtouch-api
+    ports:
+      - "${API_PORT:-4050}:8000"
     depends_on:
       database-migration:
-        condition: service_started
-      birdtouch-db:
-        condition: service_started
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+    restart: unless-stopped
+
+  # Applies database migrations (alembic upgrade head) and exits.
   database-migration:
-    image: database-migration
-    build:
-      context: src/database
-      dockerfile: Dockerfile
+    <<: *birdtouch-api
+    command: ["alembic", "upgrade", "head"]
     depends_on:
       birdtouch-db:
-        condition: service_started
+        condition: service_healthy
+
+  birdtouch-db:
+    image: postgres:18-alpine
+    env_file: .env
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
   pgadmin:
     image: dpage/pgadmin4
+    env_file: .env
+    ports:
+      - "${PGADMIN_LISTEN_PORT:-9090}:${PGADMIN_LISTEN_PORT:-9090}"
+    volumes:
+      - ./servers.pgadmin.json:/pgadmin4/servers.json:ro
     depends_on:
-      birdtouch-db:
-        condition: service_started
-  birdtouch-db:
-    image: postgres:15.2-alpine
+      - birdtouch-db
+
+volumes:
+  postgres-data:
