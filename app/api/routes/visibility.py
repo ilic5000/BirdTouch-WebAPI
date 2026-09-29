@@ -12,7 +12,13 @@ from app.services import visibility
 router = APIRouter(tags=["visibility"], responses=REQUIRES_LOGIN)
 
 RadiusKm = Annotated[
-    float, Query(alias="radiusKm", gt=0, le=500, description="Search radius in kilometers")
+    float | None,
+    Query(
+        alias="radiusKm",
+        gt=0,
+        le=500,
+        description="Search radius in kilometers. Omit it to search without a distance limit.",
+    ),
 ]
 Limit = Annotated[int, Query(ge=1, le=200, description="Maximum number of users returned")]
 _NOT_VISIBLE = {409: {"model": ErrorResponse, "description": "`not_visible`"}}
@@ -49,7 +55,7 @@ async def hide(mode: Mode, user: CurrentUser, session: SessionDep) -> None:
 
 @router.get("/nearby/private", responses=_NOT_VISIBLE)
 async def nearby_private_users(
-    user: CurrentUser, session: SessionDep, radius_km: RadiusKm, limit: Limit = 50
+    user: CurrentUser, session: SessionDep, radius_km: RadiusKm = None, limit: Limit = 50
 ) -> list[NearbyUser[PrivateProfile]]:
     """Users visible in private mode around the user's location, nearest first.
 
@@ -60,15 +66,17 @@ async def nearby_private_users(
         NearbyUser[PrivateProfile](
             user_id=profile.user_id,
             distance_km=distance,
+            latitude=latitude,
+            longitude=longitude,
             profile=PrivateProfile.from_model(profile),
         )
-        for profile, distance in rows
+        for profile, distance, latitude, longitude in rows
     ]
 
 
 @router.get("/nearby/business", responses=_NOT_VISIBLE)
 async def nearby_business_users(
-    user: CurrentUser, session: SessionDep, radius_km: RadiusKm, limit: Limit = 50
+    user: CurrentUser, session: SessionDep, radius_km: RadiusKm = None, limit: Limit = 50
 ) -> list[NearbyUser[BusinessProfile]]:
     """Users visible in business mode around the user's location, nearest first.
 
@@ -79,7 +87,9 @@ async def nearby_business_users(
         NearbyUser[BusinessProfile](
             user_id=profile.user_id,
             distance_km=distance,
+            latitude=latitude,
+            longitude=longitude,
             profile=BusinessProfile.from_model(profile),
         )
-        for profile, distance in rows
+        for profile, distance, latitude, longitude in rows
     ]

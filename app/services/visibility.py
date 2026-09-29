@@ -46,9 +46,12 @@ async def hide(session: AsyncSession, user_id: uuid.UUID, mode: Mode) -> None:
 
 
 async def find_nearby(
-    session: AsyncSession, user_id: uuid.UUID, mode: Mode, radius_km: float, limit: int
-) -> Sequence[Row[tuple[PrivateProfile | BusinessProfile, float]]]:
-    """(profile, distance in km) of other users visible in the mode nearby, nearest first.
+    session: AsyncSession, user_id: uuid.UUID, mode: Mode, radius_km: float | None, limit: int
+) -> Sequence[Row[tuple[PrivateProfile | BusinessProfile, float, float, float]]]:
+    """(profile, distance in km, latitude, longitude) of other users visible in the mode nearby,
+    nearest first.
+
+    `radius_km=None` searches without a distance limit.
 
     Profiles without enough information to be useful are left out: private profiles need
     a name and a way to get in touch, business profiles a company name and an email.
@@ -75,9 +78,10 @@ async def find_nearby(
         useful = [_has_text(BusinessProfile.company_name), _has_text(BusinessProfile.email)]
 
     query = (
-        select(profile, distance)
+        select(profile, distance, Visibility.latitude, Visibility.longitude)
         .join(Visibility, Visibility.user_id == profile.user_id)
-        .where(Visibility.mode == mode, Visibility.user_id != user_id, distance <= radius_km)
+        .where(Visibility.mode == mode, Visibility.user_id != user_id)
+        .where(*([] if radius_km is None else [distance <= radius_km]))
         .where(*useful)
         .order_by(distance)
         .limit(limit)

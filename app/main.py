@@ -29,7 +29,7 @@ def create_app() -> FastAPI:
     )
     app = FastAPI(
         title="BirdTouch API",
-        description="Backend for the BirdTouch Android app.",
+        description="Backend for the BirdTouch mobile app (Android and iOS).",
         version="1.0.0",
         lifespan=_lifespan,
     )

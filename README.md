@@ -1,6 +1,7 @@
 # BirdTouch-WebAPI
 
-BirdTouch-WebAPI is the server used by the [BirdTouch Android app](https://github.com/ilic5000/BirdTouch-Client).
+BirdTouch-WebAPI is the server used by the [BirdTouch app](https://github.com/ilic5000/BirdTouch-Client) for Android and
+iOS (Flutter).
 
 It uses [FastAPI](https://fastapi.tiangolo.com/) (Python 3.14) and PostgreSQL 18. The database schema
 is managed with [Alembic](https://alembic.sqlalchemy.org/).
@@ -104,7 +105,7 @@ differs from the old .NET API.
 | `GET`            | `/api/v1/users/{userId}/pictures/{mode}`    | Download a picture (use `pictureUrl` from profiles)      |
 | `GET`            | `/api/v1/me/visibility`                     | Modes in which the user is visible                       |
 | `PUT`, `DELETE`  | `/api/v1/me/visibility/{mode}`              | Become visible at a location (or update it); hide        |
-| `GET`            | `/api/v1/nearby/{private,business}`         | Visible users nearby, nearest first                      |
+| `GET`            | `/api/v1/nearby/{private,business}`         | Visible users nearby (with location), nearest first      |
 | `GET`            | `/api/v1/me/contacts/{private,business}`    | Saved contacts with their profiles                       |
 | `PUT`, `DELETE`  | `/api/v1/me/contacts/{mode}/{userId}`       | Save or remove a contact                                 |
 

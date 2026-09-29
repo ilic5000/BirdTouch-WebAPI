@@ -1,8 +1,8 @@
 # BirdTouch-WebAPI
 
 FastAPI backend (Python 3.14, SQLAlchemy 2 async + asyncpg, PostgreSQL 18, Alembic) for the
-BirdTouch Android app. README.md has the full docs. `changes-from-old-api.md` documents the API
-for the client that is being rewritten.
+BirdTouch mobile app (Flutter, Android + iOS: `C:\Projects\BirdTouch-Client` locally). README.md has
+the full docs. `changes-from-old-api.md` documents the API and how it differs from the old .NET one.
 
 ## Commands
 
@@ -32,7 +32,7 @@ docker compose up -d --build              # whole stack
 ## Rules
 
 - **The API is used by the mobile client.** Any change to paths, fields, status codes or error
-  codes must also be reflected in `changes-from-old-api.md` (while the client is being rewritten)
+  codes must also be reflected in `changes-from-old-api.md`, in the client (`BirdTouchApi` and its tests)
   and in the README's API table. Prefer adding over renaming or removing.
 - New error cases get their own `ApiError` subclass with a stable `code`, which is documented in
   the route's `responses=`.

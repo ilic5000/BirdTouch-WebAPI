@@ -1,8 +1,9 @@
 # Changes from the old API
 
-This document is for rewriting the BirdTouch client against the new server API. It lists everything
-that changed compared to the old .NET API, which the old Xamarin client
-([BirdTouch-Client](https://github.com/ilic5000/BirdTouch-Client)) was built against.
+This document was written for rewriting the BirdTouch client against the new server API. It lists
+everything that changed compared to the old .NET API, which the old Xamarin client was built against.
+The client has since been rewritten in Flutter (Android and iOS,
+[BirdTouch-Client](https://github.com/ilic5000/BirdTouch-Client)) and uses this API as described here.
 
 Nothing of the old API remains. Every endpoint, field name and error format changed, so
 treat this as a new API.
@@ -268,8 +269,9 @@ the user's last reported location.
 
 `GET /api/v1/nearby/private?radiusKm=5&limit=50` and `GET /api/v1/nearby/business?radiusKm=5&limit=50`
 
-- `radiusKm`: required, greater than 0 and at most 500. It is a decimal number with a `.`
-  separator. The old client formatted it with the phone's locale, which could produce `5,5`.
+- `radiusKm`: greater than 0 and at most 500. It is a decimal number with a `.` separator. The
+  old client formatted it with the phone's locale, which could produce `5,5`. Omit it to search
+  without a distance limit (the client offers this in its developer options, for testing).
 - `limit`: optional, 1-200, default 50.
 - The user must be visible in that mode themselves, otherwise `409 not_visible`. The search is
   centered on the location from their last `PUT /api/v1/me/visibility/{mode}`.
@@ -281,12 +283,16 @@ the user's last reported location.
   {
     "userId": "01a0e941-...",
     "distanceKm": 0.11,
+    "latitude": 44.8135,
+    "longitude": 20.4612,
     "profile": { "firstName": "Bob", "...": "the full private profile, as above" }
   }
 ]
 ```
 
-`/nearby/business` items have the same shape with a business profile.
+`/nearby/business` items have the same shape with a business profile. `latitude`/`longitude` are
+the user's last location (as sent with `PUT /api/v1/me/visibility/{mode}`), so the client can show
+people on a map. The old API returned no location.
 
 Only profiles with enough information are returned:
 - private: a first or last name, plus at least one of email, phone number, Facebook, Twitter or LinkedIn;

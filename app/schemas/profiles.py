@@ -88,6 +88,9 @@ class BusinessProfileUpdate(RequestModel):
 class NearbyUser[P: _Profile](ApiModel):
     user_id: uuid.UUID
     distance_km: float
+    # Where the user is visible (their last location update), e.g. to show them on a map.
+    latitude: float
+    longitude: float
     profile: P
 
 

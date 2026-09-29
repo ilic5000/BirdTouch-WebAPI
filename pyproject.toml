@@ -1,7 +1,7 @@
 [project]
 name = "birdtouch-api"
 version = "2.0.0"
-description = "BirdTouch WebAPI - backend for the BirdTouch Android app"
+description = "BirdTouch WebAPI - backend for the BirdTouch mobile app (Android and iOS)"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

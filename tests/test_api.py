@@ -49,9 +49,8 @@ async def make_visible(
 
 
 async def nearby(client: httpx.AsyncClient, user: User, mode: str, radius: object):
-    return await client.get(
-        f"/api/v1/nearby/{mode}", headers=user.headers, params={"radiusKm": radius}
-    )
+    params = {} if radius is None else {"radiusKm": radius}
+    return await client.get(f"/api/v1/nearby/{mode}", headers=user.headers, params=params)
 
 
 async def test_health(client: httpx.AsyncClient) -> None:
@@ -265,9 +264,21 @@ async def test_nearby_private_users(client: httpx.AsyncClient) -> None:
     [found] = response.json()
     assert (found["userId"], found["profile"]["firstName"]) == (near.id, "X")
     assert found["distanceKm"] == pytest.approx(0.11, abs=0.01)
+    assert (found["latitude"], found["longitude"]) == pytest.approx((latitude + 0.001, 0))
 
     response = await nearby(client, searcher, "private", 100)
     assert [user["userId"] for user in response.json()] == [near.id, far.id]  # Nearest first.
+
+    other_side = await register(client)
+    await set_private_profile(client, other_side, firstName="Far", phoneNumber="123")
+    await make_visible(client, other_side, "private", latitude, 150)  # Thousands of km away.
+    assert other_side.id not in [
+        u["userId"] for u in (await nearby(client, searcher, "private", 500)).json()
+    ]
+    response = await client.get(
+        "/api/v1/nearby/private", headers=searcher.headers, params={"limit": 200}
+    )  # No radiusKm: no distance limit.
+    assert other_side.id in [user["userId"] for user in response.json()]
 
 
 async def test_nearby_business_users(client: httpx.AsyncClient) -> None:
